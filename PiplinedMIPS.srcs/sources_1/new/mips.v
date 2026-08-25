@@ -14,7 +14,8 @@ module mips(
     output wire [31:0] aluout,
     output wire [31:0] writedata,
     input  wire [31:0] readdata,
-
+      
+    
     // Debug
     output wire        pcsrc,
     output wire        jump,
@@ -25,7 +26,9 @@ module mips(
     output wire [31:0] aluoutE,
     output wire [31:0] srcaE,
     output wire [31:0] srcbE,
-    output wire [2:0] alucontrolE
+    output wire [2:0] alucontrolE,
+    output wire [1:0] forwardAE,
+    output wire [1:0] forwardBE
 );
 
  
@@ -47,7 +50,20 @@ module mips(
     wire [2:0]  alucontrolD;
     wire [1:0]  shiftercontrolD;
     wire zeroM;
-   
+    
+    // ---------------------------------------------------------
+    //  Sygnały dla Hazard Unit
+    // ---------------------------------------------------------
+    
+    wire [4:0] rsE;
+    wire [4:0] rtE;
+    //wire [1:0] forwardAE;
+    //wire [1:0] forwardBE;
+    wire [1:0] regwriteM;
+    wire [1:0] regwriteW;
+    wire [4:0] writeregM;
+    wire [4:0] writeregW;
+    
     // ---------------------------------------------------------
     // CONTROLLER
     //
@@ -74,6 +90,7 @@ module mips(
         .pcsrc         (pcsrc),
         
         .controls       (controls)
+        
     );
 
     // Debug outputs
@@ -128,8 +145,31 @@ module mips(
         .aluoutE           (aluoutE),
         .srcaE             (srcaE),
         .srcbE             (srcbE),
-        .alucontrolE       (alucontrolE)
+        .alucontrolE       (alucontrolE),
+        
+        // Hazard signals
+        .regwriteM       (regwriteM),
+        .regwriteW       (regwriteW),
+        .rsE             (rsE),
+        .rtE             (rtE),
+        .forwardAE       (forwardAE),
+        .forwardBE       (forwardBE),
+        .writeregM       (writeregM),
+        .writeregW       (writeregW)
     );
+    
+    hazardunit hazardunit(
+            .rsE             (rsE),
+            .rtE             (rtE),
+            .writeregM       (writeregM),
+            .writeregW       (writeregW),
+            .forwardAE       (forwardAE),
+            .forwardBE       (forwardBE),
+            .regwriteM       (regwriteM),
+            .regwriteW       (regwriteW) 
+    );
+    
+    
 
 endmodule
 

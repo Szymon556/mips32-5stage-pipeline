@@ -12,11 +12,13 @@ module datapath(input wire  clk, reset,
                 input wire [1:0] shiftercontrolD,
                 input wire shiftenableD,
                 input wire pcsrcM,
-                output wire zeroM,
-                output wire [31:0] pcF,
                 input wire [31:0] instrF,
-                output wire [31:0] aluoutM,
                 input wire [31:0] readdataM,
+                input wire [1:0] forwardAE,
+                input wire [1:0] forwardBE,
+                output wire zeroM,
+                output wire [31:0] aluoutM,
+                output wire [31:0] pcF,
                 output wire [31:0] pcnextF,
                 output wire [31:0] writedataM,
                 output wire branchM,
@@ -25,14 +27,19 @@ module datapath(input wire  clk, reset,
                 output wire [31:0] aluoutE,
                 output wire [31:0] srcaE,
                 output wire [31:0] srcbE,
-                output wire [2:0] alucontrolE
+                output wire [2:0] alucontrolE,
+                output wire [4:0] rsE, rtE,
+                output wire [1:0] regwriteM,
+                output wire [1:0] regwriteW,
+                output wire [4:0]  writeregM, 
+                output wire [4:0] writeregW
                      
                 );
       
       // rejestrowanie sygnałów z datapath          
       wire [4:0] writeregE, writeregM, writeregW;
       wire [31:0] pcbranch;
-      wire [31:0] signimmD, signimmE, signimmshE,ra1inc;
+      wire [31:0] signimmD, signimmE, signimmshE;
       wire [31:0] srcaD; 
       wire [31:0] resultW;
       wire [31:0] shifteroutM;
@@ -45,9 +52,9 @@ module datapath(input wire  clk, reset,
       wire [4:0]  rsindexE, rsindexM, rsindexW;
       wire [31:0] rsplus4D, rsplus4E, rsplus4M, rsplus4W;
       wire lwincD, lwincE, lwincM, lwincW;  
-      wire [31:0] pcbrF;
       wire [31:0] jumpaddresD, pcjumpF;
-          
+      wire [31:0] srcaEF, srcbEF;
+         
       // rejestrowane control signals
       wire [1:0] regwriteE, regwriteM, regwriteW;
       wire memtoregE, memtoregM, memtoregW;
@@ -166,21 +173,39 @@ module datapath(input wire  clk, reset,
                  .q(decoderreg_signals_out) 
       );
       assign {regwriteE, memtoregE, memwriteE, branchE, alucontrolE, alusrcE,
-       regdstE, srcaE, writedataE, instrE, signimmE, shiftercontrolE, shiftenableE, pcplus4E, rsplus4E, rsindexE, lwincE } = decoderreg_signals_out;
+       regdstE, srcaE, srcbEF, instrE, signimmE, shiftercontrolE, shiftenableE, pcplus4E, rsplus4E, rsindexE, lwincE } = decoderreg_signals_out;
        
                  
      //***************************ETAP 3************************//           
                
      
-                     
+      assign rsE =  rsindexE; // rsindex jest adresem wykorzystywanym dla lwinc ale również wykorzstam dla jednostki rozwiązującej hazardy
+      assign rtE =  instrE[20:16];
+                   
       mux2 #(5) wrmux(
                 .d0(instrE[20:16]),
                 .d1(instrE[15:11]),
                 .s(regdstE),
                 .y(writeregE));
                 
+     mux4 #(32) forwardA(
+                    .d0(srcaE),
+                    .d1(resultW),
+                    .d2(aluoutmuxM),
+                    .d3(32'b0),
+                    .s(forwardAE),
+                    .y(srcaEF));
+     
+     mux4 #(32) forwardB(
+                    .d0(srcbEF),
+                    .d1(resultW),
+                    .d2(aluoutmuxM), // zapomniałem że dodałem shifter na wyjściu
+                    .d3(32'b0),
+                    .s(forwardBE),
+                    .y(writedataE));
+                
      alu alu(
-            .srca(srcaE),
+            .srca(srcaEF),
             .srcb(srcbE),
             .alucontrol(alucontrolE),
             .aluout(aluoutE),

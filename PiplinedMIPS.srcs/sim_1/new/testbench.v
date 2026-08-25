@@ -16,6 +16,8 @@ module testbench();
     wire branch;
     wire [31:0] srcaE, srcbE;
     wire [2:0] alucontrolE;
+    wire [1:0] forwardAE;
+    wire [1:0] forwardBE;
     
     integer store_count = 0;
     // jednostka która będzie testowana
@@ -35,7 +37,9 @@ module testbench();
             .aluoutE(aluoutE),
             .srcaE(srcaE),
             .srcbE(srcbE),
-            .alucontrolE(alucontrolE));
+            .alucontrolE(alucontrolE),
+            .forwardAE(forwardAE),
+            .forwardBE(forwardBE));
     
     // inicjalizuj test
     initial
@@ -75,6 +79,11 @@ begin
                 $stop;
             end
         end
+    end
+    
+    if(aluoutE === 32'd10) begin
+        $display("Test passed!!!");
+        $stop;
     end
 end
 endmodule
