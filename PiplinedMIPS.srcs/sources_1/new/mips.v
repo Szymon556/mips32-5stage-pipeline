@@ -20,7 +20,12 @@ module mips(
     output wire        jump,
     output wire [31:0] pcnext,
     output wire [9:0]  controls,
-    output wire [1:0]  ShifterControl
+    output wire [1:0]  shiftercontrol,
+    output wire branch,
+    output wire [31:0] aluoutE,
+    output wire [31:0] srcaE,
+    output wire [31:0] srcbE,
+    output wire [2:0] alucontrolE
 );
 
  
@@ -42,7 +47,7 @@ module mips(
     wire [2:0]  alucontrolD;
     wire [1:0]  shiftercontrolD;
     wire zeroM;
-    wire zeroE;
+   
     // ---------------------------------------------------------
     // CONTROLLER
     //
@@ -66,13 +71,15 @@ module mips(
         .shiftercontrol (shiftercontrolD),
         .shiftenable    (shiftenableD),
         .zero          (zeroM),
-
+        .pcsrc         (pcsrc),
+        
         .controls       (controls)
     );
 
     // Debug outputs
     assign jump = jumpD;
-    assign ShifterControl = shiftercontrolD;
+    assign branch = branchD;
+    assign shiftercontrol = shiftercontrolD;
 
     // ---------------------------------------------------------
     // DATAPATH
@@ -102,6 +109,7 @@ module mips(
         .shiftercontrolD (shiftercontrolD),
         .shiftenableD    (shiftenableD),
         .zeroM           (zeroM),
+        
 
         // Instruction Memory
         .pcF              (pc),
@@ -109,14 +117,18 @@ module mips(
         .instrD          (instrD),
 
         // Data Memory
-        .aluoutE          (aluout),
+        .aluoutM          (aluout),
         .writedataM       (writedata),
         .readdataM        (readdata),
         .memwriteM       (memwriteM),
         .memwriteD       (memwriteD),
         // PC logic / debug
         .pcsrcM           (pcsrc),
-        .pcnextF          (pcnext)     
+        .pcnextF          (pcnext),
+        .aluoutE           (aluoutE),
+        .srcaE             (srcaE),
+        .srcbE             (srcbE),
+        .alucontrolE       (alucontrolE)
     );
 
 endmodule

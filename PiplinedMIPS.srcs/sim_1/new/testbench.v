@@ -5,18 +5,37 @@ module testbench();
     reg clk;
     reg reset;
     
-    wire [31:0] writedata, dataadr;
+    wire [31:0] writedata, dataadr, aluoutE;
     wire memwrite;
     wire pcsrc;
     wire jump;
     wire [31:0] pcnext;
     wire [9:0] controls;
     wire [31:0] pc;
-    wire [1:0] ShifterControl;
+    wire [1:0] shiftercontrol;
+    wire branch;
+    wire [31:0] srcaE, srcbE;
+    wire [2:0] alucontrolE;
+    
     integer store_count = 0;
     // jednostka która będzie testowana
-    top dut(clk, reset, writedata, dataadr, memwrite,pcsrc,jump,pcnext,controls,pc,
-    ShifterControl);
+    top dut(
+            .clk(clk), 
+            .reset(reset), 
+            .writedata(writedata), 
+            .dataadr(dataadr), 
+            .memwrite(memwrite),
+            .pcsrc(pcsrc),
+            .jump(jump),
+            .pcnext(pcnext),
+            .controls(controls),
+            .pc(pc),
+            .shiftercontrol(shiftercontrol),
+            .branch(branch), 
+            .aluoutE(aluoutE),
+            .srcaE(srcaE),
+            .srcbE(srcbE),
+            .alucontrolE(alucontrolE));
     
     // inicjalizuj test
     initial
@@ -38,7 +57,7 @@ begin
         store_count = store_count + 1;
 
         if (store_count == 1) begin
-            if (dataadr === 32'd80 && writedata === 32'd7)
+            if (dataadr === 32'd84 && writedata === 32'd5)
                 $display("First store OK");
             else begin
                 $display("First store failed");

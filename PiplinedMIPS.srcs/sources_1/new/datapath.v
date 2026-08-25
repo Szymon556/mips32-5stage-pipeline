@@ -21,38 +21,43 @@ module datapath(input wire  clk, reset,
                 output wire [31:0] writedataM,
                 output wire branchM,
                 output wire memwriteM,
-                output wire [31:0] instrD     
+                output wire [31:0] instrD,
+                output wire [31:0] aluoutE,
+                output wire [31:0] srcaE,
+                output wire [31:0] srcbE,
+                output wire [2:0] alucontrolE
+                     
                 );
       
       // rejestrowanie sygnałów z datapath          
       wire [4:0] writeregE, writeregM, writeregW;
       wire [31:0] pcbranch;
       wire [31:0] signimmD, signimmE, signimmshE,ra1inc;
-      wire [31:0] srcaD,srcaE; 
-      wire [31:0] srcbE;
+      wire [31:0] srcaD; 
       wire [31:0] resultW;
       wire [31:0] shifteroutM;
       wire [31:0] aluoutmuxM, aluoutmuxW;
       wire [31:0] pcplus4F,pcplus4D,pcplus4E;
       wire [31:0] pcbranchM, pcbranchE;
       wire [31:0] writedataD, writedataE;
-      wire [31:0] aluoutE, aluoutM;
       wire [31:0] readdataW;
       wire zeroE;
       wire [4:0]  rsindexE, rsindexM, rsindexW;
       wire [31:0] rsplus4D, rsplus4E, rsplus4M, rsplus4W;
       wire lwincD, lwincE, lwincM, lwincW;  
+      wire [31:0] pcbrF;
+      wire [31:0] jumpaddresD, pcjumpF;
           
       // rejestrowane control signals
       wire [1:0] regwriteE, regwriteM, regwriteW;
       wire memtoregE, memtoregM, memtoregW;
       wire [1:0] shiftercontrolE, shiftercontrolM;
       wire memwriteE;
-      wire branchE, branchM;
+      wire branchE;
       wire [2:0] alucontrolE;
       wire alusrcE;
       wire regdstE;
-      wire [31:0] instrD, instrE, instrM;
+      wire [31:0] instrE, instrM;
       wire shiftenableE, shiftenableM;
       
       
@@ -85,23 +90,35 @@ module datapath(input wire  clk, reset,
                 .y(pcplus4F));
                 
       
+      mux2 #(32) jumpmux(
+                .d0(pcplus4F),
+                .d1(jumpaddresD),
+                .s(jumpD),
+                .y(pcjumpF)
+      );
+      
       mux2 #(32) pcbrmux(
-          .d0(pcplus4F), 
+          .d0(pcjumpF), 
           .d1(pcbranchM), 
           .s(pcsrcM), 
           .y(pcnextF)
       );
       
+      
+      
+      
       assign fetchreg_signals_in = {instrF,pcplus4F};
       
-      flopr #(64) fetchreg(
+      floprj #(64) fetchreg(
                  .clk(clk),
                  .reset(reset),
+                 .jump(jumpD),
                  .d(fetchreg_signals_in),
-                 .q(fetchreg_signals_out) 
+                 .q(fetchreg_signals_out)                
       );
       
-      assign {instrD, pcplus4D} = fetchreg_signals_out;
+       
+      assign {instrD,  pcplus4D} = fetchreg_signals_out;
                 
       //*********************** ETAP 2***************************// 
     
@@ -129,6 +146,10 @@ module datapath(input wire  clk, reset,
                  
        assign lwincD = (instrD[31:26] == 6'b111111) ? 1'b1 : 1'b0;
        
+       assign jumpaddresD = {pcplus4D[31:28],instrD[25:0],2'b00};
+       
+      
+         
                
        signext se(
                 .a(instrD[15:0]),
@@ -136,7 +157,7 @@ module datapath(input wire  clk, reset,
       
                          
        assign decoderreg_signals_in = {regwriteD, memtoregD, memwriteD, branchD, alucontrolD, alusrcD,
-       regdstD, srcaD, writedataD,instrD, signimmD, shiftercontrolD, shiftenableD, pcplus4D,pcplus4D,instrD[25:21], lwincD};
+       regdstD, srcaD, writedataD,instrD, signimmD, shiftercontrolD, shiftenableD, pcplus4D,rsplus4D,instrD[25:21], lwincD};
        
        flopr #(211) decodereg(
                  .clk(clk),

@@ -25,7 +25,12 @@ module top(input wire clk,reset,
             output wire [31:0] pcnext,
             output wire [9:0] controls,
             output wire [31:0] pc,
-            output wire [1:0] ShifterControl);
+            output wire [1:0] shiftercontrol,
+            output wire branch,
+            output wire [31:0] aluoutE,
+            output wire [31:0] srcaE,
+            output wire [31:0] srcbE,
+            output wire [2:0] alucontrolE);
             
        wire [31:0] instr, readdata;
        
@@ -42,8 +47,13 @@ module top(input wire clk,reset,
             .jump      (jump),
             .pcnext    (pcnext),
             .controls  (controls),
-            .ShifterControl (ShifterControl));
-              
+            .shiftercontrol (shiftercontrol),
+            .branch (branch),
+            .aluoutE (aluoutE),
+            .srcaE             (srcaE),
+            .srcbE             (srcbE),
+            .alucontrolE       (alucontrolE));
+                  
        imem imem(
            .a(pc[7:2]),
            .rd(instr));
