@@ -16,6 +16,9 @@ module datapath(input wire  clk, reset,
                 input wire [31:0] readdataM,
                 input wire [1:0] forwardAE,
                 input wire [1:0] forwardBE,
+                input wire  stallF,
+                input wire stallD,
+                input wire flushE,
                 output wire zeroM,
                 output wire [31:0] aluoutM,
                 output wire [31:0] pcF,
@@ -32,7 +35,9 @@ module datapath(input wire  clk, reset,
                 output wire [1:0] regwriteM,
                 output wire [1:0] regwriteW,
                 output wire [4:0]  writeregM, 
-                output wire [4:0] writeregW
+                output wire [4:0] writeregW,
+                output wire [4:0] rsD, rtD,
+                output wire memtoregE
                      
                 );
       
@@ -57,7 +62,7 @@ module datapath(input wire  clk, reset,
          
       // rejestrowane control signals
       wire [1:0] regwriteE, regwriteM, regwriteW;
-      wire memtoregE, memtoregM, memtoregW;
+      wire memtoregM, memtoregW;
       wire [1:0] shiftercontrolE, shiftercontrolM;
       wire memwriteE;
       wire branchE;
@@ -85,9 +90,10 @@ module datapath(input wire  clk, reset,
       
       
       // next PC logic
-      flopr #(32) pcreg(
+      flopren #(32) pcstall(
           .clk(clk), 
           .reset(reset), 
+          .stall   (stallF),
           .d(pcnextF), 
           .q(pcF));
           
@@ -119,6 +125,7 @@ module datapath(input wire  clk, reset,
       floprj #(64) fetchreg(
                  .clk(clk),
                  .reset(reset),
+                 .stall   (stallD), 
                  .jump(jumpD),
                  .d(fetchreg_signals_in),
                  .q(fetchreg_signals_out)                
@@ -155,7 +162,9 @@ module datapath(input wire  clk, reset,
        
        assign jumpaddresD = {pcplus4D[31:28],instrD[25:0],2'b00};
        
-      
+      // sygnały należące do hazardunit: stall
+      assign rsD = instrD[25:21];
+      assign rtD = instrD[20:16];
          
                
        signext se(
@@ -166,9 +175,10 @@ module datapath(input wire  clk, reset,
        assign decoderreg_signals_in = {regwriteD, memtoregD, memwriteD, branchD, alucontrolD, alusrcD,
        regdstD, srcaD, writedataD,instrD, signimmD, shiftercontrolD, shiftenableD, pcplus4D,rsplus4D,instrD[25:21], lwincD};
        
-       flopr #(211) decodereg(
+       floprclr #(211) decodereg(
                  .clk(clk),
                  .reset(reset),
+                 .clr (flushE),
                  .d(decoderreg_signals_in),
                  .q(decoderreg_signals_out) 
       );

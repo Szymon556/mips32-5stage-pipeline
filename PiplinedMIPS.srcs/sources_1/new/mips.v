@@ -57,12 +57,19 @@ module mips(
     
     wire [4:0] rsE;
     wire [4:0] rtE;
+    wire [4:0] rsD;
+    wire [4:0] rtD;
     //wire [1:0] forwardAE;
     //wire [1:0] forwardBE;
     wire [1:0] regwriteM;
     wire [1:0] regwriteW;
     wire [4:0] writeregM;
     wire [4:0] writeregW;
+    wire flushE;
+    wire stallD;
+    wire stallF;
+    wire memtoregE;
+    
     
     // ---------------------------------------------------------
     // CONTROLLER
@@ -152,21 +159,33 @@ module mips(
         .regwriteW       (regwriteW),
         .rsE             (rsE),
         .rtE             (rtE),
+        .rsD             (rsD),
+        .rtD             (rtD),
         .forwardAE       (forwardAE),
         .forwardBE       (forwardBE),
         .writeregM       (writeregM),
-        .writeregW       (writeregW)
+        .writeregW       (writeregW),
+        .stallD          (stallD),
+        .stallF          (stallF),
+        .flushE          (flushE),
+        .memtoregE       (memtoregE)
     );
     
     hazardunit hazardunit(
             .rsE             (rsE),
             .rtE             (rtE),
+            .rsD             (rsD),
+            .rtD             (rtD),
             .writeregM       (writeregM),
             .writeregW       (writeregW),
             .forwardAE       (forwardAE),
             .forwardBE       (forwardBE),
             .regwriteM       (regwriteM),
-            .regwriteW       (regwriteW) 
+            .regwriteW       (regwriteW),
+            .memtoregE       (memtoregE),
+            .stallD          (stallD),
+            .stallF          (stallF),
+            .flushE          (flushE)
     );
     
     
