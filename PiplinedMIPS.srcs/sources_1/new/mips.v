@@ -28,7 +28,13 @@ module mips(
     output wire [31:0] srcbE,
     output wire [2:0] alucontrolE,
     output wire [1:0] forwardAE,
-    output wire [1:0] forwardBE
+    output wire [1:0] forwardBE,
+    output wire [31:0] resultW,
+    output wire stallD,
+    output wire stallF,
+    output wire flushE,
+    output wire memtoregE,
+    output wire [31:0] instrD
 );
 
  
@@ -168,7 +174,8 @@ module mips(
         .stallD          (stallD),
         .stallF          (stallF),
         .flushE          (flushE),
-        .memtoregE       (memtoregE)
+        .memtoregE       (memtoregE),
+        .resultW         (resultW)
     );
     
     hazardunit hazardunit(

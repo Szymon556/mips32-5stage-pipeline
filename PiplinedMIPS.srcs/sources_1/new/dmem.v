@@ -16,7 +16,7 @@ module dmem(input wire clk, we,
             assign rd = RAM[a[31:2]];
             initial
                 begin
-                    RAM[64] = 32'd7;
+                    RAM[16] = 32'd7;
                 end
                 
             always @(posedge clk)

@@ -37,7 +37,8 @@ module datapath(input wire  clk, reset,
                 output wire [4:0]  writeregM, 
                 output wire [4:0] writeregW,
                 output wire [4:0] rsD, rtD,
-                output wire memtoregE
+                output wire memtoregE,
+                output wire [31:0] resultW
                      
                 );
       
@@ -238,16 +239,16 @@ module datapath(input wire  clk, reset,
                 .y(pcbranchE));
                 
        assign executereg_signals_in = {regwriteE, memtoregE, memwriteE, branchE,
-       zeroE, writedataE, writeregE, pcbranchE, aluoutE, instrE, shiftercontrolE, shiftenableE,  rsplus4E, rsindexE, lwincE };
+       zeroE, writedataE, writeregE, aluoutE, instrE, shiftercontrolE, shiftenableE,  rsplus4E, rsindexE, lwincE };
        
-       flopr #(180) executionreg(
+       flopr #(148) executionreg(
                  .clk(clk),
                  .reset(reset),
                  .d(executereg_signals_in),
                  .q(executereg_signals_out) 
       );
       assign {regwriteM, memtoregM, memwriteM, branchM,
-      zeroM, writedataM, writeregM, pcbranchM, aluoutM, instrM, shiftercontrolM,shiftenableM, rsplus4M, rsindexM, lwincM} =  executereg_signals_out;
+      zeroM, writedataM, writeregM, aluoutM, instrM, shiftercontrolM,shiftenableM, rsplus4M, rsindexM, lwincM} =  executereg_signals_out;
  //**********************ETAP 4************************//
         
       regshamt shifter (

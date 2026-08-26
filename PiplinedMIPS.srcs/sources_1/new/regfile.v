@@ -36,7 +36,7 @@ module regfile(input wire clk,
        assign we4 = we[0];
        assign we3 = we[1];
        
-       always @(posedge clk)
+       always @(negedge clk)
         begin
             if(we3 && wa3 != 0) rf[wa3] <= wd3;
             if(we4 && wa4 != 0) begin

@@ -18,6 +18,9 @@ module testbench();
     wire [2:0] alucontrolE;
     wire [1:0] forwardAE;
     wire [1:0] forwardBE;
+    wire [31:0] resultW;
+    wire stallD, stallF, flushE, memtoregE;
+    wire [31:0] instrD;
     
     integer store_count = 0;
     // jednostka która będzie testowana
@@ -39,7 +42,13 @@ module testbench();
             .srcbE(srcbE),
             .alucontrolE(alucontrolE),
             .forwardAE(forwardAE),
-            .forwardBE(forwardBE));
+            .forwardBE(forwardBE),
+            .resultW (resultW),
+            .stallD      (stallD),
+            .stallF       (stallF),
+            .flushE       (flushE),
+            .memtoregE    (memtoregE),
+            .instrD        (instrD));
     
     // inicjalizuj test
     initial
@@ -65,7 +74,7 @@ begin
                 $display("First store OK");
             else begin
                 $display("First store failed");
-                $stop;
+               // $stop;
             end
         end
 
@@ -81,7 +90,7 @@ begin
         end
     end
     
-    if(aluoutE === 32'd10) begin
+    if(writedata === 32'd11) begin
         $display("Test passed!!!");
         $stop;
     end

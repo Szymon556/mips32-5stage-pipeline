@@ -32,7 +32,13 @@ module top(input wire clk,reset,
             output wire [31:0] srcbE,
             output wire [2:0] alucontrolE,
             output wire [1:0] forwardAE,
-            output wire [1:0] forwardBE);
+            output wire [1:0] forwardBE,
+            output wire [31:0] resultW,
+            output wire stallD,
+            output wire stallF,
+            output wire flushE,
+            output wire memtoregE,
+            output wire [31:0] instrD);
             
        wire [31:0] instr, readdata;
        
@@ -56,7 +62,13 @@ module top(input wire clk,reset,
             .srcbE             (srcbE),
             .alucontrolE       (alucontrolE),
             .forwardAE   (forwardAE),
-            .forwardBE   (forwardBE) );
+            .forwardBE   (forwardBE),
+            .resultW     (resultW),
+            .stallD      (stallD),
+            .stallF       (stallF),
+            .flushE       (flushE),
+            .memtoregE    (memtoregE),
+            .instrD        (instrD));
                   
        imem imem(
            .a(pc[7:2]),
