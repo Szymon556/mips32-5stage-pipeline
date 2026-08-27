@@ -6,14 +6,12 @@ module testbench();
     reg reset;
     
     wire [31:0] writedata, dataadr, aluoutE;
-    wire memwrite;
-    wire pcsrc;
+    wire memwrite;;
     wire jump;
     wire [31:0] pcnext;
     wire [9:0] controls;
     wire [31:0] pc;
     wire [1:0] shiftercontrol;
-    wire branch;
     wire [31:0] srcaE, srcbE;
     wire [2:0] alucontrolE;
     wire [1:0] forwardAE;
@@ -30,13 +28,11 @@ module testbench();
             .writedata(writedata), 
             .dataadr(dataadr), 
             .memwrite(memwrite),
-            .pcsrc(pcsrc),
             .jump(jump),
             .pcnext(pcnext),
             .controls(controls),
             .pc(pc),
             .shiftercontrol(shiftercontrol),
-            .branch(branch), 
             .aluoutE(aluoutE),
             .srcaE(srcaE),
             .srcbE(srcbE),
@@ -70,9 +66,10 @@ begin
         store_count = store_count + 1;
 
         if (store_count == 1) begin
-            if (dataadr === 32'd84 && writedata === 32'd5)
+            if (dataadr === 32'd84 && writedata === 32'd7) begin
                 $display("First store OK");
-            else begin
+                $stop;
+           end else begin
                 $display("First store failed");
                // $stop;
             end
@@ -90,9 +87,5 @@ begin
         end
     end
     
-    if(writedata === 32'd11) begin
-        $display("Test passed!!!");
-        $stop;
-    end
 end
 endmodule

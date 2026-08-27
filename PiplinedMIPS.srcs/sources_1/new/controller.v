@@ -2,8 +2,7 @@
 `default_nettype none
 
 module controller(input wire [5:0] op,funct,
-                 input  wire zero,
-                 input  wire branchM,
+                 input wire equalD,
                  output wire memtoreg,memwrite,
                  output wire pcsrc, alusrc,
                  output wire branch,
@@ -38,7 +37,7 @@ module controller(input wire [5:0] op,funct,
                .shiftercontrol(shiftercontrol),
                .shiftenable(shiftenable));
     
-    assign pcsrc = branchM & zero;
+    assign pcsrc = branch & equalD;
 endmodule
 
 `default_nettype wire

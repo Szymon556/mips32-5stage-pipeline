@@ -17,12 +17,11 @@ module mips(
       
     
     // Debug
-    output wire        pcsrc,
     output wire        jump,
     output wire [31:0] pcnext,
     output wire [9:0]  controls,
     output wire [1:0]  shiftercontrol,
-    output wire branch,
+    output wire equalD,
     output wire [31:0] aluoutE,
     output wire [31:0] srcaE,
     output wire [31:0] srcbE,
@@ -47,15 +46,14 @@ module mips(
     wire        alusrcD;
     wire        regdstD;
     wire        shiftenableD;
-    wire        branchD;
-    wire        branchM;
     wire        jumpD;
     wire        memwriteD;
-
+    wire        pcsrcD;
     wire [1:0]  regwriteD;
     wire [2:0]  alucontrolD;
     wire [1:0]  shiftercontrolD;
-    wire zeroM;
+    wire branchD;
+  
     
     // ---------------------------------------------------------
     //  Sygnały dla Hazard Unit
@@ -67,15 +65,14 @@ module mips(
     wire [4:0] rtD;
     //wire [1:0] forwardAE;
     //wire [1:0] forwardBE;
-    wire [1:0] regwriteM;
+    wire [1:0] regwriteM, regwriteE;
     wire [1:0] regwriteW;
-    wire [4:0] writeregM;
+    wire [4:0] writeregM, writeregE;
     wire [4:0] writeregW;
     wire flushE;
-    wire stallD;
-    wire stallF;
-    wire memtoregE;
-    
+    wire stallD, stallF;
+    wire memtoregE,  memtoregM;
+    wire forwardAD, forwardBD;
     
     // ---------------------------------------------------------
     // CONTROLLER
@@ -90,8 +87,7 @@ module mips(
 
         .memtoreg       (memtoregD),
         .memwrite       (memwriteD),
-        .branch        (branchD),
-        .branchM        (branchM),
+        .equalD         (equalD),
         .alusrc         (alusrcD),
         .regdst         (regdstD),
         .regwrite       (regwriteD),
@@ -99,8 +95,8 @@ module mips(
         .alucontrol     (alucontrolD),
         .shiftercontrol (shiftercontrolD),
         .shiftenable    (shiftenableD),
-        .zero          (zeroM),
-        .pcsrc         (pcsrc),
+        .pcsrc        (pcsrcD),
+        .branch       (branchD),
         
         .controls       (controls)
         
@@ -108,7 +104,6 @@ module mips(
 
     // Debug outputs
     assign jump = jumpD;
-    assign branch = branchD;
     assign shiftercontrol = shiftercontrolD;
 
     // ---------------------------------------------------------
@@ -129,8 +124,7 @@ module mips(
 
         // Control - Decode
         .memtoregD       (memtoregD),
-        .branchD         (branchD),
-        .branchM         (branchM),
+        .equalD          (equalD),
         .alusrcD         (alusrcD),
         .regdstD         (regdstD),
         .regwriteD       (regwriteD),
@@ -138,8 +132,8 @@ module mips(
         .alucontrolD     (alucontrolD),
         .shiftercontrolD (shiftercontrolD),
         .shiftenableD    (shiftenableD),
-        .zeroM           (zeroM),
-        
+        .memwriteD       (memwriteD),
+        .pcsrcD           (pcsrcD),
 
         // Instruction Memory
         .pcF              (pc),
@@ -151,9 +145,11 @@ module mips(
         .writedataM       (writedata),
         .readdataM        (readdata),
         .memwriteM       (memwriteM),
-        .memwriteD       (memwriteD),
+        
+       
+        
         // PC logic / debug
-        .pcsrcM           (pcsrc),
+        
         .pcnextF          (pcnext),
         .aluoutE           (aluoutE),
         .srcaE             (srcaE),
@@ -175,7 +171,12 @@ module mips(
         .stallF          (stallF),
         .flushE          (flushE),
         .memtoregE       (memtoregE),
-        .resultW         (resultW)
+        .resultW         (resultW),
+        .forwardAD       (forwardAD),
+        .forwardBD        (forwardBD),
+        .regwriteE       (regwriteE),
+        .writeregE       (writeregE),
+        .memtoregM        (memtoregM)
     );
     
     hazardunit hazardunit(
@@ -186,13 +187,19 @@ module mips(
             .writeregM       (writeregM),
             .writeregW       (writeregW),
             .forwardAE       (forwardAE),
+            .forwardAD       (forwardAD),
+            .forwardBD       (forwardBD),
             .forwardBE       (forwardBE),
             .regwriteM       (regwriteM),
             .regwriteW       (regwriteW),
             .memtoregE       (memtoregE),
+            .memtoregM        (memtoregM),
             .stallD          (stallD),
             .stallF          (stallF),
-            .flushE          (flushE)
+            .flushE          (flushE),
+            .branchD         (branchD),
+            .regwriteE       (regwriteE),
+            .writeregE       (writeregE)
     );
     
     

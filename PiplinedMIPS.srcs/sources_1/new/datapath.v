@@ -7,11 +7,9 @@ module datapath(input wire  clk, reset,
                 input wire [1:0] regwriteD, 
                 input wire jumpD,
                 input wire memwriteD,
-                input wire branchD,
                 input wire [2:0] alucontrolD,
                 input wire [1:0] shiftercontrolD,
                 input wire shiftenableD,
-                input wire pcsrcM,
                 input wire [31:0] instrF,
                 input wire [31:0] readdataM,
                 input wire [1:0] forwardAE,
@@ -19,12 +17,14 @@ module datapath(input wire  clk, reset,
                 input wire  stallF,
                 input wire stallD,
                 input wire flushE,
-                output wire zeroM,
+                input wire pcsrcD,
+                input wire forwardAD,
+                input wire forwardBD,
+                output wire equalD,
                 output wire [31:0] aluoutM,
                 output wire [31:0] pcF,
                 output wire [31:0] pcnextF,
                 output wire [31:0] writedataM,
-                output wire branchM,
                 output wire memwriteM,
                 output wire [31:0] instrD,
                 output wire [31:0] aluoutE,
@@ -33,40 +33,40 @@ module datapath(input wire  clk, reset,
                 output wire [2:0] alucontrolE,
                 output wire [4:0] rsE, rtE,
                 output wire [1:0] regwriteM,
+                output wire [1:0] regwriteE,
                 output wire [1:0] regwriteW,
-                output wire [4:0]  writeregM, 
+                output wire [4:0]  writeregM,
+                output wire [4:0]  writeregE,
                 output wire [4:0] writeregW,
                 output wire [4:0] rsD, rtD,
                 output wire memtoregE,
+                output wire memtoregM,
                 output wire [31:0] resultW
                      
                 );
       
       // rejestrowanie sygnałów z datapath          
-      wire [4:0] writeregE, writeregM, writeregW;
-      wire [31:0] pcbranch;
-      wire [31:0] signimmD, signimmE, signimmshE;
+      wire [4:0] writeregM, writeregW;
+      wire [31:0] pcbranchD;
+      wire [31:0] signimmD, signimmE, signimmshD;
       wire [31:0] srcaD; 
       wire [31:0] resultW;
       wire [31:0] shifteroutM;
       wire [31:0] aluoutmuxM, aluoutmuxW;
-      wire [31:0] pcplus4F,pcplus4D,pcplus4E;
-      wire [31:0] pcbranchM, pcbranchE;
+      wire [31:0] pcplus4F,pcplus4D;
       wire [31:0] writedataD, writedataE;
       wire [31:0] readdataW;
-      wire zeroE;
       wire [4:0]  rsindexE, rsindexM, rsindexW;
       wire [31:0] rsplus4D, rsplus4E, rsplus4M, rsplus4W;
       wire lwincD, lwincE, lwincM, lwincW;  
       wire [31:0] jumpaddresD, pcjumpF;
       wire [31:0] srcaEF, srcbEF;
-         
+      wire [31:0] srcequalAD, srcequalBD;   
       // rejestrowane control signals
-      wire [1:0] regwriteE, regwriteM, regwriteW;
+      wire [1:0] regwriteM, regwriteW;
       wire memtoregM, memtoregW;
       wire [1:0] shiftercontrolE, shiftercontrolM;
       wire memwriteE;
-      wire branchE;
       wire [2:0] alucontrolE;
       wire alusrcE;
       wire regdstE;
@@ -76,8 +76,8 @@ module datapath(input wire  clk, reset,
       
       // rejestrowane sygnały poszczególnych etapów wykonywania instrukcji
       wire [63:0] fetchreg_signals_in, fetchreg_signals_out; 
-      wire [210:0] decoderreg_signals_in, decoderreg_signals_out;
-      wire [179:0] executereg_signals_in, executereg_signals_out;
+      wire [177:0] decoderreg_signals_in, decoderreg_signals_out;
+      wire [145:0] executereg_signals_in, executereg_signals_out;
       wire [109:0] memreg_signals_in, memreg_signals_out;
 
 
@@ -113,8 +113,8 @@ module datapath(input wire  clk, reset,
       
       mux2 #(32) pcbrmux(
           .d0(pcjumpF), 
-          .d1(pcbranchM), 
-          .s(pcsrcM), 
+          .d1(pcbranchD), 
+          .s(pcsrcD), 
           .y(pcnextF)
       );
       
@@ -126,7 +126,8 @@ module datapath(input wire  clk, reset,
       floprj #(64) fetchreg(
                  .clk(clk),
                  .reset(reset),
-                 .stall   (stallD), 
+                 .stall   (stallD),
+                 .clr(pcsrcD), 
                  .jump(jumpD),
                  .d(fetchreg_signals_in),
                  .q(fetchreg_signals_out)                
@@ -172,19 +173,53 @@ module datapath(input wire  clk, reset,
                 .a(instrD[15:0]),
                 .y(signimmD));
       
+      
+      // Branch prediction
+      sl2 immsh(                     
+      .signimm(signimmD),      
+      .signishm(signimmshD));  
+      
                          
-       assign decoderreg_signals_in = {regwriteD, memtoregD, memwriteD, branchD, alucontrolD, alusrcD,
-       regdstD, srcaD, writedataD,instrD, signimmD, shiftercontrolD, shiftenableD, pcplus4D,rsplus4D,instrD[25:21], lwincD};
        
-       floprclr #(211) decodereg(
+       adder rsadd2(            
+                 .a(pcplus4D),  
+                 .b(signimmshD),
+                 .y(pcbranchD));
+       
+       equal #(32) equal(
+                .a(srcequalAD),
+                .b(srcequalBD),
+                .y(equalD)
+       );
+       
+       
+       mux2 #(32) forwardmuxA (
+            .d0(srcaD),
+            .d1(aluoutmuxM),
+            .s(forwardAD),
+            .y(srcequalAD)
+       );
+       
+       mux2 #(32) forwardmuxB (
+            .d0(writedataD),
+            .d1(aluoutmuxM),
+            .s(forwardBD),
+            .y(srcequalBD)
+       );
+       
+       
+       assign decoderreg_signals_in = {regwriteD, memtoregD, memwriteD, alucontrolD, alusrcD,
+       regdstD, srcaD, writedataD,instrD, signimmD, shiftercontrolD, shiftenableD,rsplus4D,instrD[25:21], lwincD};
+       
+       floprclr #(178) decodereg(
                  .clk(clk),
                  .reset(reset),
                  .clr (flushE),
                  .d(decoderreg_signals_in),
                  .q(decoderreg_signals_out) 
       );
-      assign {regwriteE, memtoregE, memwriteE, branchE, alucontrolE, alusrcE,
-       regdstE, srcaE, srcbEF, instrE, signimmE, shiftercontrolE, shiftenableE, pcplus4E, rsplus4E, rsindexE, lwincE } = decoderreg_signals_out;
+      assign {regwriteE, memtoregE, memwriteE, alucontrolE, alusrcE,
+       regdstE, srcaE, srcbEF, instrE, signimmE, shiftercontrolE, shiftenableE, rsplus4E, rsindexE, lwincE } = decoderreg_signals_out;
        
                  
      //***************************ETAP 3************************//           
@@ -220,12 +255,12 @@ module datapath(input wire  clk, reset,
             .srcb(srcbE),
             .alucontrol(alucontrolE),
             .aluout(aluoutE),
-            .zero(zeroE));
+            .zero());
       
       
-      sl2 immsh(
-            .signimm(signimmE),
-            .signishm(signimmshE));
+      
+      
+      
        
       mux2 #(32) srcbmux(
                 .d0(writedataE),
@@ -233,22 +268,22 @@ module datapath(input wire  clk, reset,
                 .s(alusrcE),
                 .y(srcbE));
       
-      adder rsadd2(
-                .a(pcplus4E), 
-                .b(signimmshE), 
-                .y(pcbranchE));
-                
-       assign executereg_signals_in = {regwriteE, memtoregE, memwriteE, branchE,
-       zeroE, writedataE, writeregE, aluoutE, instrE, shiftercontrolE, shiftenableE,  rsplus4E, rsindexE, lwincE };
+      
+      
        
-       flopr #(148) executionreg(
+      
+                
+       assign executereg_signals_in = {regwriteE, memtoregE, memwriteE,
+        writedataE, writeregE, aluoutE, instrE, shiftercontrolE, shiftenableE,  rsplus4E, rsindexE, lwincE };
+       
+       flopr #(146) executionreg(
                  .clk(clk),
                  .reset(reset),
                  .d(executereg_signals_in),
                  .q(executereg_signals_out) 
       );
-      assign {regwriteM, memtoregM, memwriteM, branchM,
-      zeroM, writedataM, writeregM, aluoutM, instrM, shiftercontrolM,shiftenableM, rsplus4M, rsindexM, lwincM} =  executereg_signals_out;
+      assign {regwriteM, memtoregM, memwriteM,
+       writedataM, writeregM, aluoutM, instrM, shiftercontrolM,shiftenableM, rsplus4M, rsindexM, lwincM} =  executereg_signals_out;
  //**********************ETAP 4************************//
         
       regshamt shifter (

@@ -4,6 +4,7 @@
 module floprj #(parameter WIDTH = 8)
     (input wire clk, reset,
      input wire jump,
+     input wire clr,
      input wire stall,
      input wire [WIDTH-1:0] d,
      output reg [WIDTH -1:0] q);
@@ -18,7 +19,7 @@ module floprj #(parameter WIDTH = 8)
             begin
                 q <=0;
             end else begin
-                if (jump == 1) begin
+                if (jump == 1 || clr == 1) begin
                     q <= 0;
                 end else if (!stall) begin
                     q <= d;

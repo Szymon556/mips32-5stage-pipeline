@@ -8,12 +8,18 @@ module hazardunit(
            input wire [4:0] rsD,
            input wire [4:0] rtD,
            input wire memtoregE,
+           input wire memtoregM,
+           input wire branchD,
            input wire [1:0] regwriteM,
+           input wire [1:0] regwriteE,
            input wire [1:0]regwriteW,
            input wire [4:0] writeregM,
            input wire [4:0] writeregW,
+           input wire [4:0] writeregE,
            output reg [1:0] forwardAE,
            output reg [1:0] forwardBE,
+           output wire forwardAD,
+           output wire forwardBD,
            output wire stallF,
            output wire stallD,
            output wire flushE
@@ -21,6 +27,7 @@ module hazardunit(
     );
     
     wire lwstall;
+    wire branchstall;
     
     always @(*) begin
         forwardAE = 2'b00;
@@ -42,7 +49,23 @@ module hazardunit(
         else
             forwardBE = 2'b00;
     end
-    assign lwstall = ((rsD == rtE) || (rtD == rtE)) && memtoregE;
+    
+    assign forwardAD = (rsD != 0) && (rsD == writeregM) && regwriteM;
+    assign forwardBD = (rtD != 0) && (rtD == writeregM) && regwriteM;
+    
+   assign branchstall = branchD && regwriteE && (writeregE == rsD || writeregE == rtD) || 
+                        branchD && memtoregM && (writeregM == rsD || writeregM == rtD);
+    
+    //Debug info: 
+    // branchD - zatrzymuje się ten sygnał najprawdopodbniej na stanie wysokim
+    // regwriteE - wynosi 0
+    // writeregE - daje 0 i 1 w zależności do isntrukcji więc działa dobrze
+    // rsD - wygląda ze działa dobrze
+    // memtoregM - tutaj był błąd
+    
+  
+    
+    assign lwstall = (((rsD == rtE) || (rtD == rtE)) && memtoregE) || branchstall;
     assign stallF = lwstall;
     assign stallD = lwstall;
     assign flushE = lwstall;
